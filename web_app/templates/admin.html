@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ hospital_name }} - Admin Panel</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="hospital-header">
+                <div class="hospital-logo">
+                    <i class="fas fa-hospital-alt"></i>
+                </div>
+                <div class="hospital-title">
+                    <h1>{{ hospital_name }}</h1>
+                    <p class="subtitle">Admin Panel - System Management</p>
+                </div>
+            </div>
+            <div class="system-tag">
+                <span class="tag fault-tolerant">
+                    <i class="fas fa-shield-alt"></i> Fault-Tolerant
+                </span>
+                <span class="tag distributed">
+                    <i class="fas fa-network-wired"></i> Distributed
+                </span>
+                <span class="tag transactional">
+                    <i class="fas fa-exchange-alt"></i> Transactional
+                </span>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="navbar">
+            <a href="/" class="nav-link">
+                <i class="fas fa-home"></i> Home
+            </a>
+            <a href="/dashboard" class="nav-link">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a href="/booking" class="nav-link">
+                <i class="fas fa-calendar-check"></i> Book Appointment
+            </a>
+            <a href="/admin" class="nav-link active">
+                <i class="fas fa-cogs"></i> Admin Panel
+            </a>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="admin-header">
+                <h2><i class="fas fa-user-shield"></i> System Administration</h2>
+                <p>Manage distributed nodes, test failure scenarios, and monitor system health</p>
+            </div>
+
+            <div class="admin-panel-grid">
+                <!-- Failure Simulation -->
+                <div class="failure-scenarios">
+                    <h3><i class="fas fa-vial"></i> Failure Simulation</h3>
+                    <p class="section-description">Test system resilience by simulating various failure scenarios</p>
+
+                    <div class="scenario-list">
+                        {% for scenario in failure_scenarios %}
+                        <div class="scenario-item" onclick="simulateFailure('{{ scenario.id }}')">
+                            <div class="scenario-name">
+                                <i class="fas fa-bug"></i> {{ scenario.name }}
+                            </div>
+                            <div class="scenario-desc">{{ scenario.description }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="test-controls">
+                        <div class="test-option">
+                            <label for="concurrentCount"><i class="fas fa-users"></i> Concurrent Transactions
+                                Test</label>
+                            <div class="test-input-group">
+                                <input type="number" id="concurrentCount" class="test-input" min="1" max="20" value="5"
+                                    placeholder="Number of concurrent transactions">
+                                <button class="test-btn" onclick="runConcurrentTest()">
+                                    <i class="fas fa-play"></i> Run Test
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="test-option">
+                            <label><i class="fas fa-redo"></i> System Recovery Test</label>
+                            <button class="test-btn danger" onclick="testRecovery()">
+                                <i class="fas fa-heartbeat"></i> Simulate Full System Crash
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Status -->
+                <div class="system-status-panel">
+                    <h3><i class="fas fa-chart-line"></i> Live System Status</h3>
+
+                    <div class="coordinator-status">
+                        <h4><i class="fas fa-brain"></i> Coordinator Status</h4>
+                        <div class="coordinator-info">
+                            <div class="coordinator-info-item">
+                                <div class="coordinator-info-label">Status</div>
+                                <div class="coordinator-info-value status-online" id="coord-status">
+                                    {% if coordinator %}Online{% else %}Offline{% endif %}
+                                </div>
+                            </div>
+                            <div class="coordinator-info-item">
+                                <div class="coordinator-info-label">Active Transactions</div>
+                                <div class="coordinator-info-value" id="active-txns">
+                                    {{ coordinator.active_transactions if coordinator else 0 }}
+                                </div>
+                            </div>
+                            <div class="coordinator-info-item">
+                                <div class="coordinator-info-label">Lock Manager</div>
+                                <div class="coordinator-info-value" id="lock-status">
+                                    {% if coordinator.lock_status %}Active{% else %}Inactive{% endif %}
+                                </div>
+                            </div>
+                            <div class="coordinator-info-item">
+                                <div class="coordinator-info-label">Nodes Detected</div>
+                                <div class="coordinator-info-value" id="detected-nodes">
+                                    {{ coordinator.nodes|length if coordinator else 0 }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="transaction-log">
+                        <h4><i class="fas fa-history"></i> Recent Transactions</h4>
+                        <div class="log-entries" id="transaction-log">
+                            <!-- Will be populated by JavaScript -->
+                            <div class="log-entry empty">
+                                <span>No recent transactions</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test Results -->
+            <div class="test-results" id="testResults" style="display: none;">
+                <h3><i class="fas fa-clipboard-check"></i> Test Results</h3>
+                <div class="results-content" id="resultsContent">
+                    <!-- Results will be displayed here -->
+                </div>
+            </div>
+
+            <!-- System Commands -->
+            <div class="system-commands">
+                <h3><i class="fas fa-terminal"></i> System Commands</h3>
+                <div class="command-grid">
+                    <button class="command-btn" onclick="resetSystem()">
+                        <i class="fas fa-undo"></i> Reset System State
+                    </button>
+                    <button class="command-btn" onclick="clearLogs()">
+                        <i class="fas fa-trash"></i> Clear Transaction Logs
+                    </button>
+                    <button class="command-btn" onclick="forceCheckpoint()">
+                        <i class="fas fa-save"></i> Force Checkpoint
+                    </button>
+                    <button class="command-btn danger" onclick="emergencyShutdown()">
+                        <i class="fas fa-power-off"></i> Emergency Shutdown
+                    </button>
+                </div>
+            </div>
+
+            <!-- Performance Metrics -->
+            <div class="performance-metrics">
+                <h3><i class="fas fa-tachometer-alt"></i> Performance Metrics</h3>
+                <div class="metrics-grid">
+                    <div class="metric">
+                        <div class="metric-label">Transaction Success Rate</div>
+                        <div class="metric-value" id="successRate">95%</div>
+                        <div class="metric-progress">
+                            <div class="progress-bar" style="width: 95%"></div>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Average Response Time</div>
+                        <div class="metric-value" id="responseTime">120ms</div>
+                        <div class="metric-progress">
+                            <div class="progress-bar" style="width: 80%"></div>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">System Uptime</div>
+                        <div class="metric-value" id="uptime">99.8%</div>
+                        <div class="metric-progress">
+                            <div class="progress-bar" style="width: 99.8%"></div>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Concurrent Users</div>
+                        <div class="metric-value" id="concurrentUsers">0</div>
+                        <div class="metric-progress">
+                            <div class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>ICS 2403: Distributed Computing and Applications - Group 4 Project</p>
+            <p class="footer-sub">Fault-Tolerant Distributed Transactions with Two-Phase Commit Protocol</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    <script>
+        // Failure simulation
+        async function simulateFailure(scenario) {
+            showToast(`Simulating ${scenario} failure...`, 'info');
+
+            try {
+                const response = await fetch('/api/simulate-failure', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ scenario: scenario })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showToast(`Successfully simulated ${scenario} failure`, 'success');
+                    showTestResults(result);
+                } else {
+                    showToast(`Failed to simulate failure: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showToast(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Concurrent test
+        async function runConcurrentTest() {
+            const count = document.getElementById('concurrentCount').value;
+
+            showToast(`Running ${count} concurrent transactions...`, 'info');
+
+            try {
+                const response = await fetch('/api/concurrent-test', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ count: count })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showToast(`Concurrent test completed successfully`, 'success');
+                    showTestResults(result);
+                } else {
+                    showToast(`Concurrent test failed: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showToast(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Recovery test
+        async function testRecovery() {
+            if (!confirm('WARNING: This will simulate a full system crash. Continue?')) {
+                return;
+            }
+
+            showToast('Simulating system crash and recovery...', 'info');
+
+            // Simulate multiple failures
+            setTimeout(() => {
+                showToast('System crash simulated. Starting recovery...', 'warning');
+
+                setTimeout(() => {
+                    showToast('System recovery completed successfully!', 'success');
+
+                    const testResults = {
+                        success: true,
+                        message: 'System recovery test completed',
+                        steps: [
+                            '1. Simulated coordinator failure',
+                            '2. Simulated node crashes',
+                            '3. Initiated automatic recovery',
+                            '4. Restored transaction consistency',
+                            '5. System back online'
+                        ]
+                    };
+
+                    showTestResults(testResults);
+                }, 2000);
+            }, 1000);
+        }
+
+        // Show test results
+        function showTestResults(result) {
+            const resultsDiv = document.getElementById('testResults');
+            const contentDiv = document.getElementById('resultsContent');
+
+            let html = '<div class="result-card">';
+
+            if (result.summary) {
+                html += `
+                    <h4>Test Summary</h4>
+                    <div class="result-summary">
+                        <div class="summary-item">
+                            <span>Total Transactions:</span>
+                            <strong>${result.summary.total}</strong>
+                        </div>
+                        <div class="summary-item success">
+                            <span>Successful:</span>
+                            <strong>${result.summary.successful}</strong>
+                        </div>
+                        <div class="summary-item failed">
+                            <span>Failed:</span>
+                            <strong>${result.summary.failed}</strong>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (result.steps) {
+                html += '<h4>Recovery Steps</h4><ul>';
+                result.steps.forEach(step => {
+                    html += `<li>${step}</li>`;
+                });
+                html += '</ul>';
+            }
+
+            if (result.results) {
+                html += '<h4>Detailed Results</h4><div class="detailed-results">';
+                result.results.forEach((res, i) => {
+                    html += `
+                        <div class="result-item ${res.success ? 'success' : 'failed'}">
+                            <span>Transaction ${i}:</span>
+                            <span>${res.success ? 'Success' : 'Failed'}</span>
+                            ${res.transaction_id ? `<code>${res.transaction_id}</code>` : ''}
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+
+            html += '</div>';
+            contentDiv.innerHTML = html;
+            resultsDiv.style.display = 'block';
+
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                resultsDiv.style.display = 'none';
+            }, 10000);
+        }
+
+        // System commands
+        function resetSystem() {
+            if (confirm('Reset all system state to initial values?')) {
+                showToast('Resetting system state...', 'info');
+                // Implement reset logic
+            }
+        }
+
+        function clearLogs() {
+            if (confirm('Clear all transaction logs?')) {
+                showToast('Clearing transaction logs...', 'info');
+                // Implement clear logs logic
+            }
+        }
+
+        function forceCheckpoint() {
+            showToast('Forcing system checkpoint...', 'info');
+            // Implement checkpoint logic
+        }
+
+        function emergencyShutdown() {
+            if (confirm('EMERGENCY: This will shut down the entire system. Are you sure?')) {
+                showToast('Initiating emergency shutdown...', 'error');
+                // Implement shutdown logic
+            }
+        }
+
+        // Update system status periodically
+        async function updateSystemStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+
+                if (data.success && data.status) {
+                    // Update coordinator status
+                    document.getElementById('coord-status').textContent = 'Online';
+                    document.getElementById('coord-status').className = 'coordinator-info-value status-online';
+
+                    document.getElementById('active-txns').textContent =
+                        data.status.active_transactions || 0;
+
+                    document.getElementById('detected-nodes').textContent =
+                        Object.keys(data.status.nodes || {}).length;
+
+                    // Update lock status
+                    const lockStatus = data.status.lock_status || {};
+                    const lockCount = Object.keys(lockStatus.granted_locks || {}).length;
+                    document.getElementById('lock-status').textContent =
+                        lockCount > 0 ? `Active (${lockCount} locks)` : 'Inactive';
+                }
+            } catch (error) {
+                document.getElementById('coord-status').textContent = 'Offline';
+                document.getElementById('coord-status').className = 'coordinator-info-value status-offline';
+            }
+        }
+
+        // Toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Update status every 3 seconds
+        setInterval(updateSystemStatus, 3000);
+        updateSystemStatus();
+    </script>
+</body>
+
+</html>

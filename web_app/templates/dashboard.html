@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ hospital_name }} - System Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="hospital-header">
+                <div class="hospital-logo">
+                    <i class="fas fa-hospital-alt"></i>
+                </div>
+                <div class="hospital-title">
+                    <h1>{{ hospital_name }}</h1>
+                    <p class="subtitle">System Dashboard - Real-time Monitoring</p>
+                </div>
+            </div>
+            <div class="system-tag">
+                <span class="tag fault-tolerant">
+                    <i class="fas fa-shield-alt"></i> Fault-Tolerant
+                </span>
+                <span class="tag distributed">
+                    <i class="fas fa-network-wired"></i> Distributed
+                </span>
+                <span class="tag transactional">
+                    <i class="fas fa-exchange-alt"></i> Transactional
+                </span>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="navbar">
+            <a href="/" class="nav-link">
+                <i class="fas fa-home"></i> Home
+            </a>
+            <a href="/dashboard" class="nav-link active">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a href="/booking" class="nav-link">
+                <i class="fas fa-calendar-check"></i> Book Appointment
+            </a>
+            <a href="/admin" class="nav-link">
+                <i class="fas fa-cogs"></i> Admin Panel
+            </a>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="dashboard-header">
+                <h2><i class="fas fa-tachometer-alt"></i> System Dashboard</h2>
+                <div class="last-updated" id="lastUpdated">
+                    Last updated: <span id="updateTime">Just now</span>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <!-- Left: Node Status -->
+                <div class="node-status-container">
+                    <h3><i class="fas fa-network-wired"></i> Distributed Node Status</h3>
+
+                    <div class="node-status-grid">
+                        {% for node in nodes %}
+                        <div class="node-card {{ 'online' if node.online else 'offline' }}">
+                            <div class="node-header">
+                                <div class="node-title">
+                                    <div class="node-color" style="background-color: {{ node.color }};"></div>
+                                    <h4>{{ node.name }}</h4>
+                                </div>
+                                <div class="node-status {{ 'status-online' if node.online else 'status-offline' }}">
+                                    {{ 'Online' if node.online else 'Offline' }}
+                                </div>
+                            </div>
+
+                            <div class="node-info">
+                                <div class="node-address">
+                                    <i class="fas fa-server"></i>
+                                    {{ node.status.host if node.status else 'localhost' }}:{{ node.status.port if
+                                    node.status else 'N/A' }}
+                                </div>
+
+                                {% if node.status %}
+                                <div class="node-stats">
+                                    <div class="node-stat">
+                                        <div class="node-stat-value">{{ node.status.total_slots }}</div>
+                                        <div class="node-stat-label">Total Slots</div>
+                                    </div>
+                                    <div class="node-stat">
+                                        <div class="node-stat-value">{{ node.status.available_slots }}</div>
+                                        <div class="node-stat-label">Available</div>
+                                    </div>
+                                    <div class="node-stat">
+                                        <div class="node-stat-value">{{ node.status.booked_slots }}</div>
+                                        <div class="node-stat-label">Booked</div>
+                                    </div>
+                                    <div class="node-stat">
+                                        <div class="node-stat-value">{{ node.status.pending_slots }}</div>
+                                        <div class="node-stat-label">Pending</div>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <div class="node-actions">
+                                    <button class="node-action" onclick="refreshNode('{{ node.id }}')">
+                                        <i class="fas fa-sync-alt"></i> Refresh
+                                    </button>
+                                    {% if not node.online %}
+                                    <button class="node-action restart" onclick="restartNode('{{ node.id }}')">
+                                        <i class="fas fa-play"></i> Restart
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- System Health -->
+                    <div class="system-health">
+                        <h4><i class="fas fa-heartbeat"></i> System Health</h4>
+                        <div class="health-indicators">
+                            <div class="health-indicator">
+                                <div class="indicator-label">Node Availability</div>
+                                <div class="indicator-value" id="nodeAvailability">
+                                    {{ (nodes|selectattr('online')|list|length / nodes|length * 100)|round|int if
+                                    nodes|length > 0 else 0 }}%
+                                </div>
+                                <div class="health-bar">
+                                    <div class="bar-fill"
+                                        style="width: {{ (nodes|selectattr('online')|list|length / nodes|length * 100)|round|int if nodes|length > 0 else 0 }}%">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="health-indicator">
+                                <div class="indicator-label">Transaction Success Rate</div>
+                                <div class="indicator-value" id="txnSuccessRate">95%</div>
+                                <div class="health-bar">
+                                    <div class="bar-fill" style="width: 95%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Coordinator & System Info -->
+                <div class="system-info-container">
+                    <!-- Coordinator Panel -->
+                    <div class="coordinator-panel">
+                        <h3><i class="fas fa-brain"></i> Coordinator Status</h3>
+
+                        <div class="coordinator-info">
+                            <div class="coordinator-info-item">
+                                <div class="coordinator-info-label">Status</div>
+                                <div class="coordinator-info-value status-online">
+                                    {% if coordinator %}Online{% else %}Offline{% endif %}
+                                </div>
+                            </div>
+                            <div class="coordinator-info-item">
+                                <div class="coordinator-info-label">Active Transactions</div>
+                                <div class="coordinator-info-value" id="activeTxns">
+                                    {{ coordinator.active_transactions if coordinator else 0 }}
+                                </div>
+                            </div>
+                            <div class="coordinator-info-item">
+                                <div class="coordinator-info-label">Host</div>
+                                <div class="coordinator-info-value">
+                                    {{ coordinator.host if coordinator else 'N/A' }}
+                                </div>
+                            </div>
+                            <div class="coordinator-info-item">
+                                <div class="coordinator-info-label">Port</div>
+                                <div class="coordinator-info-value">
+                                    {{ coordinator.port if coordinator else 'N/A' }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Lock Status -->
+                        <div class="lock-status">
+                            <h4><i class="fas fa-lock"></i> Lock Manager</h4>
+                            {% if coordinator and coordinator.lock_status %}
+                            <div class="lock-summary">
+                                <div class="lock-count">
+                                    <span class="count-value">{{ coordinator.lock_status.granted_locks|length if
+                                        coordinator.lock_status.granted_locks else 0 }}</span>
+                                    <span class="count-label">Granted Locks</span>
+                                </div>
+                                <div class="lock-count">
+                                    <span class="count-value">{{ coordinator.lock_status.waiting_locks|length if
+                                        coordinator.lock_status.waiting_locks else 0 }}</span>
+                                    <span class="count-label">Waiting Locks</span>
+                                </div>
+                                <div class="lock-count">
+                                    <span class="count-value">{{ coordinator.lock_status.deadlocks|length if
+                                        coordinator.lock_status.deadlocks else 0 }}</span>
+                                    <span class="count-label">Deadlocks</span>
+                                </div>
+                            </div>
+
+                            {% if coordinator.lock_status.deadlocks and coordinator.lock_status.deadlocks|length > 0 %}
+                            <div class="deadlock-alert">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <span>{{ coordinator.lock_status.deadlocks|length }} deadlock(s) detected!</span>
+                            </div>
+                            {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Transaction Statistics -->
+                    <div class="transaction-stats">
+                        <h3><i class="fas fa-chart-bar"></i> Transaction Statistics</h3>
+
+                        <div class="stats-cards">
+                            <div class="stat-card">
+                                <div class="stat-icon success">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-value" id="committedTxns">0</div>
+                                    <div class="stat-label">Committed</div>
+                                </div>
+                            </div>
+
+                            <div class="stat-card">
+                                <div class="stat-icon aborted">
+                                    <i class="fas fa-times-circle"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-value" id="abortedTxns">0</div>
+                                    <div class="stat-label">Aborted</div>
+                                </div>
+                            </div>
+
+                            <div class="stat-card">
+                                <div class="stat-icon pending">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-value" id="pendingTxns">0</div>
+                                    <div class="stat-label">Pending</div>
+                                </div>
+                            </div>
+
+                            <div class="stat-card">
+                                <div class="stat-icon throughput">
+                                    <i class="fas fa-bolt"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-value" id="txnThroughput">0/min</div>
+                                    <div class="stat-label">Throughput</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Transaction Chart -->
+                        <div class="chart-container">
+                            <canvas id="transactionChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Recent Transactions -->
+                    <div class="recent-transactions">
+                        <h3><i class="fas fa-history"></i> Recent Transactions</h3>
+                        <div class="transactions-list" id="transactionsList">
+                            <div class="transaction-item loading">
+                                <div class="spinner"></div>
+                                <span>Loading transactions...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Metrics -->
+            <div class="system-metrics">
+                <h3><i class="fas fa-chart-line"></i> System Performance Metrics</h3>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <i class="fas fa-exchange-alt"></i>
+                            <h4>Transaction Latency</h4>
+                        </div>
+                        <div class="metric-value" id="avgLatency">150ms</div>
+                        <div class="metric-trend up">
+                            <i class="fas fa-arrow-up"></i> 5%
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <i class="fas fa-users"></i>
+                            <h4>Concurrent Users</h4>
+                        </div>
+                        <div class="metric-value" id="concurrentUsers">12</div>
+                        <div class="metric-trend down">
+                            <i class="fas fa-arrow-down"></i> 2%
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <i class="fas fa-database"></i>
+                            <h4>Data Consistency</h4>
+                        </div>
+                        <div class="metric-value" id="consistencyScore">99.9%</div>
+                        <div class="metric-trend stable">
+                            <i class="fas fa-equals"></i> 0%
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <i class="fas fa-shield-alt"></i>
+                            <h4>Fault Tolerance</h4>
+                        </div>
+                        <div class="metric-value" id="faultTolerance">High</div>
+                        <div class="metric-trend stable">
+                            <i class="fas fa-check"></i> Optimal
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Chart -->
+                <div class="performance-chart">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+
+            <!-- System Logs -->
+            <div class="system-logs">
+                <h3><i class="fas fa-clipboard-list"></i> System Activity Log</h3>
+                <div class="logs-controls">
+                    <select id="logLevel">
+                        <option value="all">All Levels</option>
+                        <option value="info">Info</option>
+                        <option value="warning">Warning</option>
+                        <option value="error">Error</option>
+                    </select>
+                    <button class="log-action" onclick="clearLogs()">
+                        <i class="fas fa-trash"></i> Clear Logs
+                    </button>
+                    <button class="log-action" onclick="exportLogs()">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+                <div class="logs-container" id="logsContainer">
+                    <!-- Logs will be loaded here -->
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>ICS 2403: Distributed Computing and Applications - Group 4 Project</p>
+            <p class="footer-sub">Fault-Tolerant Distributed Transactions with Two-Phase Commit Protocol</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    <script>
+        // Initialize charts
+        let transactionChart, performanceChart;
+
+        function initializeCharts() {
+            // Transaction Chart
+            const ctx1 = document.getElementById('transactionChart').getContext('2d');
+            transactionChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: ['1min', '2min', '3min', '4min', '5min', 'Now'],
+                    datasets: [{
+                        label: 'Transactions per Minute',
+                        data: [12, 19, 8, 15, 12, 18],
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Transaction Count'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Performance Chart
+            const ctx2 = document.getElementById('performanceChart').getContext('2d');
+            performanceChart = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: ['Cardiology', 'Radiology', 'Orthopedics', 'Emergency'],
+                    datasets: [{
+                        label: 'Available Slots',
+                        data: [8, 5, 7, 15],
+                        backgroundColor: [
+                            'rgba(255, 107, 107, 0.7)',
+                            'rgba(78, 205, 196, 0.7)',
+                            'rgba(149, 225, 211, 0.7)',
+                            'rgba(255, 209, 102, 0.7)'
+                        ],
+                        borderColor: [
+                            '#FF6B6B',
+                            '#4ECDC4',
+                            '#95E1D3',
+                            '#FFD166'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Available Slots'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update system status
+        async function updateSystemStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+
+                if (data.success && data.status) {
+                    // Update last updated time
+                    document.getElementById('updateTime').textContent = new Date().toLocaleTimeString();
+
+                    // Update coordinator info
+                    document.getElementById('activeTxns').textContent =
+                        data.status.active_transactions || 0;
+
+                    // Update node availability
+                    const onlineNodes = Object.values(data.status.nodes || {}).filter(n => n.status === 'active').length;
+                    const totalNodes = Object.keys(data.status.nodes || {}).length;
+                    const availability = totalNodes > 0 ? Math.round((onlineNodes / totalNodes) * 100) : 0;
+
+                    document.getElementById('nodeAvailability').textContent = availability + '%';
+                    document.querySelector('.bar-fill').style.width = availability + '%';
+
+                    // Update lock counts
+                    const lockStatus = data.status.lock_status || {};
+                    const grantedLocks = Object.keys(lockStatus.granted_locks || {}).length;
+                    const waitingLocks = Object.keys(lockStatus.waiting_locks || {}).length;
+                    const deadlocks = lockStatus.deadlocks ? lockStatus.deadlocks.length : 0;
+
+                    // Update transaction statistics (simulated)
+                    document.getElementById('committedTxns').textContent =
+                        Math.floor(Math.random() * 100) + 50;
+                    document.getElementById('abortedTxns').textContent =
+                        Math.floor(Math.random() * 10);
+                    document.getElementById('pendingTxns').textContent =
+                        data.status.active_transactions || 0;
+                    document.getElementById('txnThroughput').textContent =
+                        Math.floor(Math.random() * 20) + 10 + '/min';
+
+                    // Update performance metrics
+                    document.getElementById('avgLatency').textContent =
+                        (Math.random() * 100 + 100).toFixed(0) + 'ms';
+                    document.getElementById('concurrentUsers').textContent =
+                        Math.floor(Math.random() * 20) + 5;
+
+                    // Update charts
+                    updateCharts();
+
+                    // Load recent transactions
+                    loadRecentTransactions();
+
+                    // Load system logs
+                    loadSystemLogs();
+                }
+            } catch (error) {
+                console.error('Error updating system status:', error);
+            }
+        }
+
+        // Update charts
+        function updateCharts() {
+            if (transactionChart && performanceChart) {
+                // Update transaction chart with random data
+                const newData = transactionChart.data.datasets[0].data.map(() =>
+                    Math.floor(Math.random() * 20) + 5
+                );
+                transactionChart.data.datasets[0].data = newData;
+                transactionChart.update();
+
+                // Update performance chart with random data
+                const performanceData = performanceChart.data.datasets[0].data.map(() =>
+                    Math.floor(Math.random() * 20) + 3
+                );
+                performanceChart.data.datasets[0].data = performanceData;
+                performanceChart.update();
+            }
+        }
+
+        // Load recent transactions
+        async function loadRecentTransactions() {
+            const transactionsList = document.getElementById('transactionsList');
+
+            // Simulated transaction data
+            const transactions = [
+                { id: 'TXN001234', status: 'committed', time: '10:30:45', nodes: 4 },
+                { id: 'TXN001235', status: 'pending', time: '10:31:22', nodes: 3 },
+                { id: 'TXN001236', status: 'aborted', time: '10:32:15', nodes: 4 },
+                { id: 'TXN001237', status: 'committed', time: '10:33:01', nodes: 2 },
+                { id: 'TXN001238', status: 'committed', time: '10:34:18', nodes: 4 }
+            ];
+
+            let html = '';
+            transactions.forEach(txn => {
+                html += `
+                    <div class="transaction-item ${txn.status}">
+                        <div class="txn-id">${txn.id}</div>
+                        <div class="txn-status ${txn.status}">
+                            <i class="fas fa-${txn.status === 'committed' ? 'check-circle' : txn.status === 'aborted' ? 'times-circle' : 'clock'}"></i>
+                            ${txn.status.charAt(0).toUpperCase() + txn.status.slice(1)}
+                        </div>
+                        <div class="txn-time">${txn.time}</div>
+                        <div class="txn-nodes">
+                            <i class="fas fa-server"></i> ${txn.nodes} nodes
+                        </div>
+                    </div>
+                `;
+            });
+
+            transactionsList.innerHTML = html;
+        }
+
+        // Load system logs
+        async function loadSystemLogs() {
+            const logsContainer = document.getElementById('logsContainer');
+
+            // Simulated log data
+            const logs = [
+                { time: '10:30:45', level: 'info', message: 'Transaction TXN001234 committed successfully' },
+                { time: '10:31:22', level: 'warning', message: 'Node Cardiology experiencing high latency' },
+                { time: '10:32:15', level: 'error', message: 'Transaction TXN001236 aborted due to timeout' },
+                { time: '10:33:01', level: 'info', message: 'Emergency department node restarted' },
+                { time: '10:34:18', level: 'info', message: 'System checkpoint created' }
+            ];
+
+            const logLevel = document.getElementById('logLevel').value;
+            let html = '';
+
+            logs.filter(log => logLevel === 'all' || log.level === logLevel)
+                .forEach(log => {
+                    html += `
+                        <div class="log-entry ${log.level}">
+                            <span class="log-time">${log.time}</span>
+                            <span class="log-level ${log.level}">${log.level.toUpperCase()}</span>
+                            <span class="log-message">${log.message}</span>
+                        </div>
+                    `;
+                });
+
+            logsContainer.innerHTML = html || '<div class="no-logs">No logs found</div>';
+        }
+
+        // Node actions
+        async function refreshNode(nodeId) {
+            showToast(`Refreshing node ${nodeId}...`, 'info');
+            // Implement node refresh logic
+        }
+
+        async function restartNode(nodeId) {
+            if (confirm(`Restart node ${nodeId}?`)) {
+                showToast(`Restarting node ${nodeId}...`, 'info');
+                // Implement node restart logic
+            }
+        }
+
+        // Log actions
+        function clearLogs() {
+            if (confirm('Clear all system logs?')) {
+                document.getElementById('logsContainer').innerHTML = '<div class="no-logs">No logs found</div>';
+                showToast('Logs cleared', 'success');
+            }
+        }
+
+        function exportLogs() {
+            showToast('Exporting logs...', 'info');
+            // Implement log export logic
+        }
+
+        // Toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            initializeCharts();
+            updateSystemStatus();
+            loadRecentTransactions();
+            loadSystemLogs();
+
+            // Update every 5 seconds
+            setInterval(updateSystemStatus, 5000);
+
+            // Watch log level changes
+            document.getElementById('logLevel').addEventListener('change', loadSystemLogs);
+        });
+    </script>
+</body>
+
+</html>

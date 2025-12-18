@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ hospital_name }} - Book Appointment</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="hospital-header">
+                <div class="hospital-logo">
+                    <i class="fas fa-hospital-alt"></i>
+                </div>
+                <div class="hospital-title">
+                    <h1>{{ hospital_name }}</h1>
+                    <p class="subtitle">Book Appointment - Distributed Transaction System</p>
+                </div>
+            </div>
+            <div class="system-tag">
+                <span class="tag fault-tolerant">
+                    <i class="fas fa-shield-alt"></i> Fault-Tolerant
+                </span>
+                <span class="tag distributed">
+                    <i class="fas fa-network-wired"></i> Distributed
+                </span>
+                <span class="tag transactional">
+                    <i class="fas fa-exchange-alt"></i> Transactional
+                </span>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="navbar">
+            <a href="/" class="nav-link">
+                <i class="fas fa-home"></i> Home
+            </a>
+            <a href="/dashboard" class="nav-link">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a href="/booking" class="nav-link active">
+                <i class="fas fa-calendar-check"></i> Book Appointment
+            </a>
+            <a href="/admin" class="nav-link">
+                <i class="fas fa-cogs"></i> Admin Panel
+            </a>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="booking-header">
+                <h2><i class="fas fa-calendar-plus"></i> Book Hospital Appointment</h2>
+                <p class="booking-description">
+                    This system uses distributed transactions with Two-Phase Commit protocol
+                    to ensure your appointment is consistently booked across all hospital departments.
+                </p>
+            </div>
+
+            <div class="booking-container">
+                <!-- Left: Booking Form -->
+                <div class="booking-form-container">
+                    <form id="bookingForm" class="booking-form">
+                        <div class="form-section">
+                            <h3><i class="fas fa-user"></i> Patient Information</h3>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="patientName">Full Name *</label>
+                                    <input type="text" id="patientName" name="patient_name" required
+                                        placeholder="Enter full name">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="patientId">Patient ID *</label>
+                                    <input type="text" id="patientId" name="patient_id" required
+                                        placeholder="e.g., P001234">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="patientPhone">Phone Number</label>
+                                    <input type="tel" id="patientPhone" name="patient_phone"
+                                        placeholder="Enter phone number">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="patientEmail">Email Address</label>
+                                    <input type="email" id="patientEmail" name="patient_email"
+                                        placeholder="Enter email address">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3><i class="fas fa-stethoscope"></i> Department Selection</h3>
+
+                            <div class="department-selection">
+                                {% for node in nodes %}
+                                <div class="department-option" onclick="selectDepartment('{{ node.id }}')"
+                                    data-department="{{ node.id }}" style="border-color: {{ node.color }};">
+                                    <div class="department-icon" style="background-color: {{ node.color }};">
+                                        <i
+                                            class="fas fa-{{ 'heart' if node.id == 'N001' else 'x-ray' if node.id == 'N002' else 'bone' if node.id == 'N003' else 'ambulance' }}"></i>
+                                    </div>
+                                    <div class="department-info">
+                                        <h4>{{ node.name }}</h4>
+                                        <p>Available slots: <span class="slot-count"
+                                                id="slots-{{ node.id }}">Loading...</span></p>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <input type="hidden" id="selectedDepartment" name="department" required>
+                        </div>
+
+                        <div class="form-section">
+                            <h3><i class="fas fa-clock"></i> Appointment Time</h3>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="appointmentDate">Date *</label>
+                                    <input type="date" id="appointmentDate" name="slot_date" required
+                                        min="{{ now_date }}">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="appointmentTime">Time *</label>
+                                    <select id="appointmentTime" name="slot_time" required>
+                                        <option value="">Select time</option>
+                                        <option value="09:00">09:00 AM</option>
+                                        <option value="10:00">10:00 AM</option>
+                                        <option value="11:00">11:00 AM</option>
+                                        <option value="12:00">12:00 PM</option>
+                                        <option value="14:00">02:00 PM</option>
+                                        <option value="15:00">03:00 PM</option>
+                                        <option value="16:00">04:00 PM</option>
+                                        <option value="17:00">05:00 PM</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3><i class="fas fa-file-medical"></i> Additional Information</h3>
+
+                            <div class="form-group">
+                                <label for="symptoms">Symptoms / Reason for Visit</label>
+                                <textarea id="symptoms" name="symptoms" rows="3"
+                                    placeholder="Describe your symptoms or reason for visit"></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="priority">Priority Level</label>
+                                <select id="priority" name="priority">
+                                    <option value="normal">Normal</option>
+                                    <option value="urgent">Urgent</option>
+                                    <option value="emergency">Emergency</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="transaction-info">
+                            <h4><i class="fas fa-exchange-alt"></i> Transaction Details</h4>
+                            <div class="transaction-steps">
+                                <div class="step">
+                                    <div class="step-number">1</div>
+                                    <div class="step-info">
+                                        <strong>Lock Acquisition</strong>
+                                        <p>System acquires locks on selected slot</p>
+                                    </div>
+                                </div>
+                                <div class="step">
+                                    <div class="step-number">2</div>
+                                    <div class="step-info">
+                                        <strong>Two-Phase Commit</strong>
+                                        <p>Prepare and commit phases across all nodes</p>
+                                    </div>
+                                </div>
+                                <div class="step">
+                                    <div class="step-number">3</div>
+                                    <div class="step-info">
+                                        <strong>Atomic Update</strong>
+                                        <p>All-or-nothing update across distributed system</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="submit-btn" id="submitBtn">
+                            <i class="fas fa-paper-plane"></i> Book Appointment (Distributed Transaction)
+                        </button>
+
+                        <div class="form-note">
+                            <p><i class="fas fa-info-circle"></i> This booking uses a distributed transaction
+                                that ensures consistency across all hospital nodes. If any node fails during
+                                the transaction, the entire booking will be rolled back automatically.</p>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Right: Available Slots -->
+                <div class="available-slots-container">
+                    <h3><i class="fas fa-calendar-alt"></i> Available Slots</h3>
+                    <div class="slots-filter">
+                        <select id="filterDepartment" onchange="filterSlots()">
+                            <option value="all">All Departments</option>
+                            {% for node in nodes %}
+                            <option value="{{ node.id }}">{{ node.name }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <input type="date" id="filterDate" onchange="filterSlots()" value="{{ now_date }}">
+                    </div>
+
+                    <div class="slots-grid" id="slotsGrid">
+                        <!-- Slots will be loaded by JavaScript -->
+                        <div class="loading-slots">
+                            <div class="spinner"></div>
+                            <p>Loading available slots...</p>
+                        </div>
+                    </div>
+
+                    <div class="transaction-monitor" id="transactionMonitor" style="display: none;">
+                        <h4><i class="fas fa-sync-alt"></i> Transaction Progress</h4>
+                        <div class="progress-steps">
+                            <div class="progress-step" id="step1">
+                                <div class="step-icon">1</div>
+                                <div class="step-label">Initializing</div>
+                            </div>
+                            <div class="progress-step" id="step2">
+                                <div class="step-icon">2</div>
+                                <div class="step-label">Locking</div>
+                            </div>
+                            <div class="progress-step" id="step3">
+                                <div class="step-icon">3</div>
+                                <div class="step-label">Prepare Phase</div>
+                            </div>
+                            <div class="progress-step" id="step4">
+                                <div class="step-icon">4</div>
+                                <div class="step-label">Commit Phase</div>
+                            </div>
+                            <div class="progress-step" id="step5">
+                                <div class="step-icon">5</div>
+                                <div class="step-label">Complete</div>
+                            </div>
+                        </div>
+                        <div class="transaction-log" id="transactionLog">
+                            <!-- Transaction log will appear here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Success Modal -->
+            <div class="modal" id="successModal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-icon success">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h3>Appointment Booked Successfully!</h3>
+                    <div class="booking-details" id="bookingDetails">
+                        <!-- Details will be filled by JavaScript -->
+                    </div>
+                    <div class="transaction-id">
+                        <strong>Transaction ID:</strong>
+                        <code id="transactionId">TXN00000000</code>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="modal-btn" onclick="printBooking()">
+                            <i class="fas fa-print"></i> Print Confirmation
+                        </button>
+                        <button class="modal-btn" onclick="closeModal()">
+                            <i class="fas fa-times"></i> Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>ICS 2403: Distributed Computing and Applications - Group 4 Project</p>
+            <p class="footer-sub">Fault-Tolerant Distributed Transactions with Two-Phase Commit Protocol</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    <script>
+        // Initialize date field with today's date
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('appointmentDate').value = today;
+        document.getElementById('filterDate').value = today;
+
+        // Load available slots
+        async function loadAvailableSlots() {
+            const slotsGrid = document.getElementById('slotsGrid');
+
+            try {
+
+
+
+
+                // Load slots from all nodes
+                let allSlots = [];
+
+
+                for (const node of {{ nodes | tojson }
+            }) {
+                try {
+                    const response = await fetch(`/api/nodes/${node.id}/slots`);
+                    const data = await response.json();
+
+                    if (data.success && data.slots) {
+                        data.slots.forEach(slot => {
+                            slot.departmentId = node.id;
+                            slot.departmentName = node.name;
+                            slot.color = node.color;
+                            allSlots.push(slot);
+                        });
+                    }
+
+                    // Update slot count
+                    const slotCount = document.getElementById(`slots-${node.id}`);
+                    if (slotCount) {
+                        slotCount.textContent = data.slots ? data.slots.length : '0';
+                    }
+                } catch (error) {
+                    console.error(`Error loading slots for ${node.name}:`, error);
+                }
+            }
+
+            displaySlots(allSlots);
+
+        } catch (error) {
+            slotsGrid.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Error loading available slots. Please try again.</p>
+                    </div>
+                `;
+        }
+
+        // Display slots in grid
+        function displaySlots(slots) {
+            const slotsGrid = document.getElementById('slotsGrid');
+
+            if (slots.length === 0) {
+                slotsGrid.innerHTML = `
+                    <div class="no-slots">
+                        <i class="fas fa-calendar-times"></i>
+                        <p>No available slots found</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            slots.forEach(slot => {
+                html += `
+                    <div class="slot-card" 
+                         onclick="selectSlot('${slot.slot_id}', '${slot.departmentId}', '${slot.time}', '${slot.date}')"
+                         data-department="${slot.departmentId}"
+                         data-date="${slot.date}"
+                         style="border-color: ${slot.color};">
+                        <div class="slot-time">${slot.time}</div>
+                        <div class="slot-date">${slot.date}</div>
+                        <div class="slot-department" style="color: ${slot.color};">
+                            ${slot.departmentName}
+                        </div>
+                    </div>
+                `;
+            });
+
+            slotsGrid.innerHTML = html;
+        }
+
+        // Filter slots
+        function filterSlots() {
+            const department = document.getElementById('filterDepartment').value;
+            const date = document.getElementById('filterDate').value;
+
+            const slotCards = document.querySelectorAll('.slot-card');
+            slotCards.forEach(card => {
+                const cardDept = card.getAttribute('data-department');
+                const cardDate = card.getAttribute('data-date');
+
+                const showDept = department === 'all' || cardDept === department;
+                const showDate = !date || cardDate === date;
+
+                card.style.display = showDept && showDate ? 'block' : 'none';
+            });
+        }
+
+        // Select department
+        function selectDepartment(departmentId) {
+            document.getElementById('selectedDepartment').value = departmentId;
+
+            // Update UI
+            const deptOptions = document.querySelectorAll('.department-option');
+            deptOptions.forEach(option => {
+                option.classList.remove('selected');
+                if (option.getAttribute('data-department') === departmentId) {
+                    option.classList.add('selected');
+                }
+            });
+
+            // Filter slots for selected department
+            document.getElementById('filterDepartment').value = departmentId;
+            filterSlots();
+        }
+
+        // Select slot
+        function selectSlot(slotId, departmentId, time, date) {
+            // Auto-select department
+            selectDepartment(departmentId);
+
+            // Set time and date
+            document.getElementById('appointmentTime').value = time;
+            document.getElementById('appointmentDate').value = date;
+
+            // Highlight selected slot
+            const slotCards = document.querySelectorAll('.slot-card');
+            slotCards.forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // Find and select the matching slot card
+            const selectedCard = Array.from(slotCards).find(card =>
+                card.getAttribute('data-department') === departmentId &&
+                card.querySelector('.slot-time').textContent === time &&
+                card.querySelector('.slot-date').textContent === date
+            );
+
+            if (selectedCard) {
+                selectedCard.classList.add('selected');
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('bookingForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+
+            // Validate form
+            if (!data.department) {
+                alert('Please select a department');
+                return;
+            }
+
+            // Show transaction monitor
+            document.getElementById('transactionMonitor').style.display = 'block';
+            updateTransactionStep(1, 'Initializing distributed transaction...');
+
+            // Disable submit button
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-sync fa-spin"></i> Processing Transaction...';
+
+            try {
+                // Step 1: Begin transaction
+                updateTransactionStep(2, 'Acquiring locks on selected slot...');
+
+                // Send booking request
+                const response = await fetch('/booking', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Step 3: Prepare phase
+                    updateTransactionStep(3, 'Prepare phase - All nodes voting...');
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+
+                    // Step 4: Commit phase
+                    updateTransactionStep(4, 'Commit phase - Finalizing transaction...');
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+
+                    // Step 5: Complete
+                    updateTransactionStep(5, 'Transaction completed successfully!');
+
+                    // Show success modal
+                    showSuccessModal(result);
+
+                } else {
+                    // Transaction failed
+                    updateTransactionLog('Transaction failed: ' + result.error, 'error');
+                    showToast('Booking failed: ' + result.error, 'error');
+                }
+
+            } catch (error) {
+                updateTransactionLog('Error: ' + error.message, 'error');
+                showToast('Error processing booking: ' + error.message, 'error');
+            } finally {
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Book Appointment (Distributed Transaction)';
+            }
+        });
+
+
+        // Update transaction step
+        function updateTransactionStep(step, message) {
+            // Reset all steps
+            for (let i = 1; i <= 5; i++) {
+                const stepEl = document.getElementById(`step${i}`);
+                stepEl.classList.remove('active', 'completed');
+            }
+
+            // Mark completed steps
+            for (let i = 1; i < step; i++) {
+                document.getElementById(`step${i}`).classList.add('completed');
+            }
+
+            // Mark current step
+            const currentStep = document.getElementById(`step${step}`);
+            if (currentStep) {
+                currentStep.classList.add('active');
+            }
+
+            // Add to transaction log
+            updateTransactionLog(message, 'info');
+        }
+
+        // Update transaction log
+        function updateTransactionLog(message, type = 'info') {
+            const log = document.getElementById('transactionLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const typeIcon = type === 'error' ? 'fa-exclamation-circle' :
+                type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            logEntry.innerHTML = `
+                <span class="log-time">${timestamp}</span>
+                <span class="log-message">
+                    <i class="fas ${typeIcon}"></i> ${message}
+                </span>
+            `;
+
+            log.prepend(logEntry);
+
+            // Keep only last 10 entries
+            const entries = log.querySelectorAll('.log-entry');
+            if (entries.length > 10) {
+                entries[entries.length - 1].remove();
+            }
+        }
+
+        // Show success modal
+        function showSuccessModal(result) {
+            const modal = document.getElementById('successModal');
+            const details = document.getElementById('bookingDetails');
+            const txnId = document.getElementById('transactionId');
+
+            const formData = new FormData(document.getElementById('bookingForm'));
+            const data = Object.fromEntries(formData.entries());
+
+
+
+            // Find department name
+            const department = {{ nodes | tojson
+        }}.find(n => n.id === data.department);
+
+        details.innerHTML = `
+                <div class="detail-row">
+                    <strong>Patient:</strong> ${data.patient_name}
+                </div>
+                <div class="detail-row">
+                    <strong>Department:</strong> ${department ? department.name : data.department}
+                </div>
+                <div class="detail-row">
+                    <strong>Date & Time:</strong> ${data.slot_date} at ${data.slot_time}
+                </div>
+                <div class="detail-row">
+                    <strong>Patient ID:</strong> ${data.patient_id}
+                </div>
+            `;
+
+        txnId.textContent = result.transaction_id || 'TXN' + Date.now();
+
+        modal.style.display = 'flex';
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('successModal').style.display = 'none';
+            // Reload slots
+            loadAvailableSlots();
+        }
+
+        // Print booking
+        function printBooking() {
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>Booking Confirmation</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        .header { text-align: center; margin-bottom: 30px; }
+                        .details { margin: 20px 0; }
+                        .detail-row { margin: 10px 0; }
+                        .transaction-id { background: #f5f5f5; padding: 10px; margin: 20px 0; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>{{ hospital_name }}</h1>
+                        <h2>Appointment Confirmation</h2>
+                    </div>
+                    ${document.getElementById('bookingDetails').innerHTML}
+                    <div class="transaction-id">
+                        ${document.getElementById('transactionId').outerHTML}
+                    </div>
+                    <p><em>Printed on ${new Date().toLocaleString()}</em></p>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        // Toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Load slots on page load
+        loadAvailableSlots();
+
+        // Auto-refresh slots every 30 seconds
+        setInterval(loadAvailableSlots, 30000);
+    </script>
+</body>
+
+</html>

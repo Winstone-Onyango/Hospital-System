@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ hospital_name }} - Distributed Hospital System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="hospital-header">
+                <div class="hospital-logo">
+                    <i class="fas fa-hospital-alt"></i>
+                </div>
+                <div class="hospital-title">
+                    <h1>{{ hospital_name }}</h1>
+                    <p class="subtitle">Distributed Hospital Management System</p>
+                </div>
+            </div>
+            <div class="system-tag">
+                <span class="tag fault-tolerant">
+                    <i class="fas fa-shield-alt"></i> Fault-Tolerant
+                </span>
+                <span class="tag distributed">
+                    <i class="fas fa-network-wired"></i> Distributed
+                </span>
+                <span class="tag transactional">
+                    <i class="fas fa-exchange-alt"></i> Transactional
+                </span>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="navbar">
+            <a href="/" class="nav-link active">
+                <i class="fas fa-home"></i> Home
+            </a>
+            <a href="/dashboard" class="nav-link">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a href="/booking" class="nav-link">
+                <i class="fas fa-calendar-check"></i> Book Appointment
+            </a>
+            <a href="/admin" class="nav-link">
+                <i class="fas fa-cogs"></i> Admin Panel
+            </a>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="hero-section">
+                <div class="hero-text">
+                    <h2>Advanced Distributed Hospital System</h2>
+                    <p class="hero-description">
+                        A fault-tolerant, transactional distributed system for hospital appointment management
+                        with guaranteed consistency and automatic recovery from failures.
+                    </p>
+                    <div class="hero-features">
+                        <div class="feature">
+                            <i class="fas fa-atom"></i>
+                            <h4>4 Distributed Nodes</h4>
+                            <p>Cardiology, Radiology, Orthopedics & Emergency</p>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-lock"></i>
+                            <h4>Transaction Safety</h4>
+                            <p>Two-Phase Commit with ACID properties</p>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-users"></i>
+                            <h4>Concurrency Control</h4>
+                            <p>Lock-based coordination for multiple users</p>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-heartbeat"></i>
+                            <h4>Fault Tolerance</h4>
+                            <p>Automatic failure detection & recovery</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-image">
+                    <div class="system-architecture">
+                        <div class="coordinator-node">
+                            <i class="fas fa-brain"></i>
+                            <span>Coordinator</span>
+                        </div>
+                        <div class="connections">
+                            <div class="connection"></div>
+                            <div class="connection"></div>
+                            <div class="connection"></div>
+                            <div class="connection"></div>
+                        </div>
+                        <div class="department-nodes">
+                            <div class="node" style="background-color: #FF6B6B;">
+                                <i class="fas fa-heart"></i>
+                                <span>Cardiology</span>
+                            </div>
+                            <div class="node" style="background-color: #4ECDC4;">
+                                <i class="fas fa-x-ray"></i>
+                                <span>Radiology</span>
+                            </div>
+                            <div class="node" style="background-color: #95E1D3;">
+                                <i class="fas fa-bone"></i>
+                                <span>Orthopedics</span>
+                            </div>
+                            <div class="node" style="background-color: #FFD166;">
+                                <i class="fas fa-ambulance"></i>
+                                <span>Emergency</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <h3>Quick Actions</h3>
+                <div class="action-cards">
+                    <a href="/booking" class="action-card book-appointment">
+                        <i class="fas fa-calendar-plus"></i>
+                        <h4>Book Appointment</h4>
+                        <p>Schedule with any department</p>
+                    </a>
+                    <a href="/dashboard" class="action-card view-status">
+                        <i class="fas fa-chart-bar"></i>
+                        <h4>System Status</h4>
+                        <p>Monitor all nodes & transactions</p>
+                    </a>
+                    <a href="/admin" class="action-card admin-panel">
+                        <i class="fas fa-vial"></i>
+                        <h4>Failure Testing</h4>
+                        <p>Simulate system failures</p>
+                    </a>
+                </div>
+            </div>
+
+            <!-- System Information -->
+            <div class="system-info">
+                <div class="info-card">
+                    <h3><i class="fas fa-info-circle"></i> System Requirements Met</h3>
+                    <ul class="requirements-list">
+                        <li><i class="fas fa-check-circle"></i> 4 Distributed Nodes (Processes)</li>
+                        <li><i class="fas fa-check-circle"></i> Atomic Transactions with 2PC</li>
+                        <li><i class="fas fa-check-circle"></i> Lock-based Concurrency Control</li>
+                        <li><i class="fas fa-check-circle"></i> Failure Detection & Recovery</li>
+                        <li><i class="fas fa-check-circle"></i> Web-based GUI Interface</li>
+                        <li><i class="fas fa-check-circle"></i> Transaction Rollback Support</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h3><i class="fas fa-bolt"></i> Live Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat">
+                            <div class="stat-value" id="active-transactions">0</div>
+                            <div class="stat-label">Active Transactions</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value" id="total-slots">60</div>
+                            <div class="stat-label">Total Slots</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value" id="available-slots">45</div>
+                            <div class="stat-label">Available Slots</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value" id="nodes-online">4</div>
+                            <div class="stat-label">Nodes Online</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>ICS 2403: Distributed Computing and Applications - Group 4 Project</p>
+            <p class="footer-sub">Fault-Tolerant Distributed Transactions with Two-Phase Commit Protocol</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    <script>
+        // Update live statistics
+        async function updateStatistics() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+
+                if (data.success && data.status) {
+                    document.getElementById('active-transactions').textContent =
+                        data.status.active_transactions || 0;
+
+                    // Calculate total and available slots from nodes
+                    let totalSlots = 0;
+                    let availableSlots = 0;
+                    let onlineNodes = 0;
+
+                    if (data.status.nodes) {
+                        Object.values(data.status.nodes).forEach(node => {
+                            if (node.status === 'active') {
+                                onlineNodes++;
+                            }
+                        });
+                    }
+
+                    document.getElementById('nodes-online').textContent = onlineNodes;
+                }
+            } catch (error) {
+                console.error('Failed to update statistics:', error);
+            }
+        }
+
+        // Update statistics every 5 seconds
+        setInterval(updateStatistics, 5000);
+        updateStatistics();
+    </script>
+</body>
+
+</html>
