@@ -11,9 +11,9 @@ from threading import Thread
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def run_coordinator():
-    """Run the coordinator server"""
+    """Run the coordinator server""" 
     print("Starting Coordinator Server...")
-    coord_dir = os.path.join(BASE_DIR, 'coordinator')
+    coord_dir = os.path.join(BASE_DIR, 'coordinator') 
     script_path = os.path.join(coord_dir, 'coordinator_server.py')
     subprocess.run([sys.executable, script_path], cwd=coord_dir)
 
